@@ -13,9 +13,6 @@ type DBConfig struct {
 }
 
 func GetConfig() *Config {
-	//ds061375.mlab.com
-	//mongodb://axelmacnamara:Axel@193@ds061375.mlab.com:61375/mestre
-
 	return &Config{
 		DB: &DBConfig{
 			hosts:      "localhost:27017",
