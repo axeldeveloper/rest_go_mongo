@@ -38,10 +38,8 @@ func (a *App) Initialize() {
 			Password: password,
 		}
 		*/
-		//session, err := mgo.Dial("mongodb://172.20.13.96:27017/")
-		// session, err := mgo.Dial("mongodb://rene:rene@111@ds061375.mlab.com:61375/mestre")
 		session, err := mgo.Dial("mongodb://localhost:27017/mestre")
-		//session, err := mgo.Dial("mongodb://axel:766312@localhost:31117/mestre")
+	
 	
 		//session, err := mgo.DialWithInfo(info)
 	if err != nil {
