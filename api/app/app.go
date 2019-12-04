@@ -7,7 +7,7 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/gorilla/mux"
-	"rest.gorn.mongo/api/app/handler"
+	"rest_go_mongo/api/app/handler"
 )
 
 const (
@@ -21,38 +21,50 @@ const (
 // App has router and db instances
 type App struct {
 	Router *mux.Router
-	DB     *mgo.Session
+	DB     *mgo.Session 
 }
 
 // App initialize with predefined configuration
 func (a *App) Initialize() {
 
-	//fmt.Println("app config:", a)
+		//fmt.Println("app config:", a)
 
-	/*info := &mgo.DialInfo{
-		Addrs:    []string{hosts},
-		Timeout:  60 * time.Second,
-		Database: database,
-		Username: username,
-		Password: password,
-	}*/
-
-	session, err := mgo.Dial("mongodb://axel:766312@localhost:31117/mestre")
-	//session, err := mgo.DialWithInfo(info)
+		/*
+		info := &mgo.DialInfo{
+			Addrs:    []string{hosts},
+			Timeout:  60 * time.Second,
+			Database: database,
+			Username: username,
+			Password: password,
+		}
+		*/
+		//session, err := mgo.Dial("mongodb://172.20.13.96:27017/")
+		// session, err := mgo.Dial("mongodb://rene:rene@111@ds061375.mlab.com:61375/mestre")
+		session, err := mgo.Dial("mongodb://localhost:27017/mestre")
+		//session, err := mgo.Dial("mongodb://axel:766312@localhost:31117/mestre")
+	
+		//session, err := mgo.DialWithInfo(info)
 	if err != nil {
 		//panic(err)
-		log.Println("Could not connect to mongo: ", err.Error())
+		log.Println("Não foi possível conectar ao mongo: ", err.Error())
 		fmt.Println("", err)
 		return
 	}
 
 	session.SetMode(mgo.Monotonic, true)
 	a.DB = session
-	//a.DB = model.DBMigrate(db)
 	a.Router = mux.NewRouter()
 	a.setRouters()
 
 }
+
+func (a *App) Initialize2() {
+
+	a.Router = mux.NewRouter()
+	a.setRouters()
+
+}
+
 
 // Set all required routers
 func (a *App) setRouters() {
@@ -65,6 +77,8 @@ func (a *App) setRouters() {
 	a.Put("/employees/{title}/disable", a.DisableEmployee)
 	a.Put("/employees/{title}/enable", a.EnableEmployee)
 }
+
+/// r.HandleFunc("/articles/{category}/{id:[0-9]+}", ArticleHandler).Name("article")
 
 // Wrap the router for GET method
 func (a *App) Get(path string, f func(w http.ResponseWriter, r *http.Request)) {
@@ -118,7 +132,11 @@ func (a *App) EnableEmployee(w http.ResponseWriter, r *http.Request) {
 	//handler.EnableEmployee(a.DB, w, r)
 }
 
+
 // Run the app on it's router
+// Executando o aplicativo no roteador
 func (a *App) Run(host string) {
+	
+	log.Println("Porta: ", host ) 
 	log.Fatal(http.ListenAndServe(host, a.Router))
 }

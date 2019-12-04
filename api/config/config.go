@@ -16,10 +16,10 @@ func GetConfig() *Config {
 	return &Config{
 		DB: &DBConfig{
 			hosts:      "localhost:27017",
-			database:   "movies_db",
+			database:   "mestre",
 			username:   "",
 			password:   "",
-			collection: "userdetails",
+			collection: "Employee",
 		},
 	}
 }

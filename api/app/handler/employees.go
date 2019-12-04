@@ -9,7 +9,7 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/mux"
-	"rest.gorn.mongo/api/app/model"
+	"rest_go_mongo/api/app/model"
 )
 
 func GetAllEmployees(session *mgo.Session, w http.ResponseWriter, r *http.Request) {
