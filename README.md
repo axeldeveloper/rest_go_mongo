@@ -70,7 +70,7 @@ $ ./hello-world
 // hello world
 ```
 
-# In a folder where you want to write your go code
+# Craindo projeto
 go mod init api-test
 
 # Instalando pacotes 
@@ -88,7 +88,22 @@ go mod init api-test
     - api/app/handler/mgodao.go
     - api/app/model/model.go      (vamos mudar para Employes)   
 
+
+# Routes - Rotas do Projeto 
+    GET  => http://localhost:8000/employess
+    POST => http://localhost:8000/employees
+
+
 # Criando Model
+```go
+    type Employee struct {
+        _id    bson.ObjectId `bson:"_id,omitempty"`
+        Name   string        `json:"name"`
+        City   string        `json:"city"`
+        Age    int           `json:"age"`
+        Status bool          `json:"status"`
+    }
+```
 
 
 #  Rum server

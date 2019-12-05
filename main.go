@@ -10,7 +10,6 @@ func main() {
 	//config *config.Config
 	app := &app.App{}
 	fmt.Println("Iniciando Serviço :")
-	//app.Initialize()
-	app.Initialize2()
-	app.Run(":8000")
+	app.Initialize()	
+	app.Run(":8183")
 }

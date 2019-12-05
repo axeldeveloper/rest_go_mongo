@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
+	"encoding/json"	
+	"net/http" 
+	//"fmt"
+	//"log"
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -12,57 +12,70 @@ import (
 	"rest_go_mongo/api/app/model"
 )
 
-func GetAllEmployees(session *mgo.Session, w http.ResponseWriter, r *http.Request) {
-	employees := []model.Employee{}
-	c := session.DB("mestre").C("employees")
-	_ = c.Find(nil).All(&employees)
 
+const (
+	DBNAME = "mestre"
+	COLLECTION = "employees"
+)
+
+
+/***************************************************
+	CRUDO MONGODB GOLANG
+*****************************************************/
+func GetAllEmployees(session *mgo.Session, w http.ResponseWriter, r *http.Request)   {
+	employees := []model.Employee{}
+	_ = session.DB(DBNAME).C(COLLECTION).Find(nil).All(&employees)
 	respondJSON(w, http.StatusOK, employees)
 }
-
-func CreateEmployee(session *mgo.Session, w http.ResponseWriter, r *http.Request) {
+func GetEmployeeByID(session *mgo.Session, w http.ResponseWriter, r *http.Request)   {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	employee, erro := FindById(session, id)	
+	if erro != nil {
+		//respondError(w, http.StatusNotAcceptable, "Registro não encontado")	
+		respondError(w, http.StatusNotFound, erro.Error())	
+		//log.Fatal("Erro: ", erro)
+		return 	
+	}	
+	//if employee == nil {return}
+	respondJSON(w, http.StatusOK, employee)
+}
+func GetEmployeeByName(session *mgo.Session, w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	employee, erro := Find_By(session, name)
+	if erro != nil {
+		//respondError(w, http.StatusNotAcceptable, "Registro não encontado")	
+		respondError(w, http.StatusNotFound, erro.Error())
+		//log.Fatal(err)
+		return
+	}
+	//if employee == nil {return}
+	respondJSON(w, http.StatusOK, employee)
+}
+func CreateEmployee(session *mgo.Session, w http.ResponseWriter, r *http.Request)    {
 	employee := model.Employee{}
-
-	Jerr := json.NewDecoder(r.Body).Decode(&employee)
-
-	//fmt.Fprintf(w, "%s %s is %d years old!", employee.Name, employee.City, employee.Age)
-
+	Jerr := json.NewDecoder(r.Body).Decode(&employee)	
 	if Jerr != nil {
 		respondError(w, http.StatusBadRequest, Jerr.Error())
 		return
 	}
 	defer r.Body.Close()
-	c := session.DB("mestre").C("employees")
-	err := c.Insert(&employee)
+	err := session.DB(DBNAME).C(COLLECTION).Insert(&employee)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	respondJSON(w, http.StatusCreated, employee)
 }
-
-func GetEmployee(session *mgo.Session, w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	name := vars["name"]
-
-	fmt.Println("Var Nome ", name)
-
-	employee := getEmployeeOr404(session, name, w, r)
-	if employee == nil {
-		return
-	}
-	respondJSON(w, http.StatusOK, employee)
-}
-
-/*
-func UpdateEmployee(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	name := vars["name"]
-	employee := getEmployeeOr404(db, name, w, r)
-	if employee == nil {
-		return
+func UpdateEmployee(session *mgo.Session, w http.ResponseWriter, r *http.Request)    {
+	params   := mux.Vars(r)
+	id       := params["id"]	
+	employee, erro := FindId_ByID(session, id)
+	//if employee == nil {}
+	if erro != nil {
+		respondError(w, http.StatusNotAcceptable, "Registro não encontado")				
+		return 	//log.Fatal("Erro: ", erro)
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -71,90 +84,109 @@ func UpdateEmployee(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+	selector := bson.M{"_id": bson.ObjectIdHex(id)}
+	data 	 := bson.M{"$set": bson.M{
+		"name": employee.Name,
+		"city": employee.City,
+		"age":  employee.Age,
+		"status": employee.Status}}
 
-	if err := db.Save(&employee).Error; err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+	err 	 := session.DB(DBNAME).C(COLLECTION).Update(selector,  data)
+	if err != nil {	
+		respondError(w, http.StatusMethodNotAllowed,  err.Error() )
 		return
 	}
 	respondJSON(w, http.StatusOK, employee)
 }
-
-func DeleteEmployee(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	name := vars["name"]
-	employee := getEmployeeOr404(db, name, w, r)
-	if employee == nil {
-		return
+func DeleteEmployee(session *mgo.Session, w http.ResponseWriter, r *http.Request)    {
+	params := mux.Vars(r)
+	id  := params["id"]	
+	employee, erro := FindId_ByID(session, id)
+	
+	if erro != nil {
+		respondError(w, http.StatusNotFound, erro.Error())				
+		return 	//log.Fatal("Erro: ", erro)
 	}
-	if err := db.Delete(&employee).Error; err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+
+	//if employee == nil {return}
+	err := session.DB(DBNAME).C(COLLECTION).Remove(&employee)
+	
+	if err != nil {
+		respondError(w, http.StatusNotFound, erro.Error())
 		return
 	}
 	respondJSON(w, http.StatusNoContent, nil)
 }
-
-func DisableEmployee(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	name := vars["name"]
-	employee := getEmployeeOr404(db, name, w, r)
-	if employee == nil {
-		return
+func DisableEmployee(session *mgo.Session, w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id  := params["id"]	
+	employee, erro := FindId_ByID(session, id)	
+	if erro != nil {
+		respondError(w, http.StatusNotFound, erro.Error())				
+		return 	//log.Fatal("Erro: ", erro)
 	}
 	employee.Disable()
-	if err := db.Save(&employee).Error; err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	respondJSON(w, http.StatusOK, employee)
-}
-
-func EnableEmployee(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	name := vars["name"]
-	employee := getEmployeeOr404(db, name, w, r)
-	if employee == nil {
-		return
-	}
-	employee.Enable()
-	if err := db.Save(&employee).Error; err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	respondJSON(w, http.StatusOK, employee)
-}
-*/
-
-// getEmployeeOr404 gets a employee instance if exists, or respond the 404 error otherwise
-func getEmployeeOr404(session *mgo.Session, name string, w http.ResponseWriter, r *http.Request) *model.Employee {
-
-	employee := model.Employee{}
-	c := session.DB("mestre").C("employees")
-	//err := c.First(&employee, model.Employee{Name: name} )
-	conditions := bson.M{"name": name}
-	err := c.Find(conditions).One(&employee)
-	fmt.Println("employee ", err)
+	selector := bson.M{"_id": bson.ObjectIdHex(id)}
+	//data 	 := bson.M{"$set": bson.M{"status": false}}
+	_, err := session.DB(DBNAME).C(COLLECTION).Upsert(selector, &employee)
 	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		//fmt.Println("Erro 404 ", err)
-		log.Fatal(err)
-		//return nil
+		respondError(w, http.StatusNotFound, erro.Error())
+		return
+	}	
+	respondJSON(w, http.StatusOK, employee)
+}
+func EnableEmployee(session *mgo.Session, w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id  := params["id"]	
+	employee, erro := FindId_ByID(session, id)
+	
+	if erro != nil {
+		respondError(w, http.StatusNotFound, erro.Error())				
+		return
 	}
 
-	return &employee
+	employee.Enable()	
+	selector := bson.M{"_id": bson.ObjectIdHex(id)}
+	//data 	 := bson.M{"$set": bson.M{"status": false}}
+	_, err := session.DB(DBNAME).C(COLLECTION).Upsert(selector, &employee)
+	if err != nil {
+		respondError(w, http.StatusNotFound, erro.Error())
+		return
+	}
+				
+	respondJSON(w, http.StatusOK, employee)
 }
 
-/*
 
-func GetByID(id string) []ToDoItem {
-	var result ToDoItem
-	var res []ToDoItem
-	_ = c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(&result)
+
+
+/***************************************************
+	FILTROS MONGODB GOLANG
+*****************************************************/
+// Find a movie by its id
+func FindById(session *mgo.Session, id string)    (*model.Employee, error)  {
+	var employee = model.Employee{}
+	selector := bson.M{"_id": bson.ObjectIdHex(id)}
+	err := session.DB(DBNAME).C(COLLECTION).Find(selector).One(&employee)
+	//err := session.DB(DBNAME).C(COLLECTION).FindId(bson.ObjectIdHex(id)).One(&employee)
+	return &employee, err
+}
+func FindId_ByID(session *mgo.Session, Id string) (*model.Employee, error)  {
+	employee := model.Employee{}	
+	c := session.DB(DBNAME).C(COLLECTION) 
+	err := c.FindId(bson.ObjectIdHex(Id)).One(&employee)
+	return &employee, err
+}
+func Find_By(session *mgo.Session, name string)   (*model.Employee, error)  {
+	employee := model.Employee{}
+	selector := bson.M{"name": name}
+	err := session.DB(DBNAME).C(COLLECTION).Find(selector).One(&employee)
+	return &employee, err
+}
+func GetByID(session *mgo.Session, id string) []model.Employee {
+	var result model.Employee
+	var res []model.Employee
+	_ = session.DB(DBNAME).C(COLLECTION).Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(&result)
 	res = append(res, result)
 	return res
 }
-
-
-*/
