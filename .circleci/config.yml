@@ -5,7 +5,7 @@ jobs: # basic units of work in a run
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
       - image: circleci/golang:1.12 #
       # CircleCI PostgreSQL images available at: https://hub.docker.com/r/circleci/postgres/
-      - image: mongo:3.4.4-jessie
+      - image: mongo:jessie
         environment: # environment variables for primary container
           POSTGRES_USER: 
           POSTGRES_DB: 
