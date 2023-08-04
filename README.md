@@ -108,3 +108,28 @@ go mod init api-test
 
 #  Rum server
 > go run main.go
+
+## Deployment
+    Axel Alexander
+
+## My web site
+
+* [axel](https://axe-dev.herokuapp.com/) - my site
+
+## Contributing
+
+
+
+## Versioning
+
+
+
+## Authors
+
+* **Axel Alexander ** - *web site* - [contact and contracts](http://axel-dev.herokuapp.com/)
+
+ See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
