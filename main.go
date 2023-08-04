@@ -11,5 +11,5 @@ func main() {
 	app := &app.App{}
 	fmt.Println("Iniciando Serviço :")
 	app.Initialize()
-	app.Run(":8183")
+	app.Run(":8084")
 }
